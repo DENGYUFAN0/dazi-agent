@@ -1,16 +1,25 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const clientId = process.env.SECONDME_CLIENT_ID;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://dazi-agent.zeabur.app";
   const redirectUri = `${baseUrl}/api/auth/callback`;
 
-  // 构造 SecondMe OAuth 授权 URL
-  const oauthUrl = new URL("https://go.second.me/oauth/");
-  oauthUrl.searchParams.set("client_id", clientId || "");
-  oauthUrl.searchParams.set("redirect_uri", redirectUri);
-  oauthUrl.searchParams.set("response_type", "code");
-  oauthUrl.searchParams.set("scope", "user_info shades chat");
+  if (!clientId) {
+    return new NextResponse(
+      JSON.stringify({ error: "SECONDME_CLIENT_ID 环境变量未设置" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
-  return NextResponse.redirect(oauthUrl.toString());
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "user_info shades chat",
+  });
+
+  const oauthUrl = `https://go.second.me/oauth/?${params.toString()}`;
+
+  return NextResponse.redirect(oauthUrl);
 }
